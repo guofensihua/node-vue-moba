@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const path = require('path');
 
 module.exports = app => {
     router.post('/', async (req, res) => {
@@ -33,4 +34,14 @@ module.exports = app => {
         req.Model = require(`../../models/${resourceName}`);
         next();
     }, router);
+
+    // 处理图片上传
+    const multer = require('multer');
+    const upload = multer({ dest: path.join(__dirname, '/../../uploads') });
+
+    app.post('/admin/api/upload', upload.single('file'), (req, res) => {
+        const file = req.file;
+        file.url = `http://localhost:3000/uploads/${file.filename}`;
+        res.send(file);
+    })
 }
