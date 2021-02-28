@@ -42,7 +42,7 @@ export default {
       } else {
         const res = await this.axios.post("/rest/categories", this.model);
       }
-      this.$router.push("/rest/categories/list");
+      this.$router.push("/categories/list");
       this.$message({
         type: "success",
         message: "保存成功",
