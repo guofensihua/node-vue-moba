@@ -1,6 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const path = require('path');
+const assert = require('http-assert');
+const jwt = require('jsonwebtoken');
+const AdminUser = require('../../models/AdminUser');
+
+const authMiddleware = require('../../middleware/auth');
+const resourceMiddleware = require('../../middleware/resource');
 
 module.exports = app => {
     router.post('/', async (req, res) => {
@@ -29,19 +35,42 @@ module.exports = app => {
             success: true,
         })
     })
-    app.use('/admin/api/rest/:resource', (req, res, next) => {
-        const resourceName = require('inflection').classify(req.params.resource);
-        req.Model = require(`../../models/${resourceName}`);
-        next();
-    }, router);
+    app.use('/admin/api/rest/:resource', authMiddleware(), resourceMiddleware(), router);
 
     // 处理图片上传
     const multer = require('multer');
     const upload = multer({ dest: path.join(__dirname, '/../../uploads') });
 
-    app.post('/admin/api/upload', upload.single('file'), (req, res) => {
+    app.post('/admin/api/upload', authMiddleware(),upload.single('file'), (req, res) => {
         const file = req.file;
         file.url = `http://localhost:3000/uploads/${file.filename}`;
         res.send(file);
+    })
+
+    // 登录
+    app.post('/admin/api/login', async (req, res) => {
+        const { username, password } = req.body;
+        const user = await AdminUser.findOne({ username }).select('+password');
+
+        assert(user, 422, '用户不存在哦');
+
+        if (user) {
+            let isValid = require('bcryptjs').compareSync(password, user.password);
+            if (isValid) {
+                const token = jwt.sign({ id: user._id }, app.get('secret'));
+                res.send({ token });
+            } else {
+                res.status(422).send({
+                    message: '密码错误'
+                })
+            }
+        }
+    })
+
+    // 统一错误处理
+    app.use((err, req, res, next) => {
+        res.status(err.statusCode || 500).send({
+            message: err.message
+        })
     })
 }

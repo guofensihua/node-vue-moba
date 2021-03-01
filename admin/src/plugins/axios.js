@@ -2,6 +2,7 @@
 
 import Vue from 'vue';
 import axios from "axios";
+import router from '../router';
 
 // Full config:  https://github.com/axios/axios#request-config
 // axios.defaults.baseURL = process.env.baseURL || process.env.apiUrl || '';
@@ -18,11 +19,14 @@ let config = {
 const _axios = axios.create(config);
 
 _axios.interceptors.request.use(
-  function(config) {
+  function (config) {
     // Do something before request is sent
+    if (localStorage.token) {
+      config.headers.Authorization = 'Bearer ' + localStorage.token;
+    }
     return config;
   },
-  function(error) {
+  function (error) {
     // Do something with request error
     return Promise.reject(error);
   }
@@ -30,17 +34,26 @@ _axios.interceptors.request.use(
 
 // Add a response interceptor
 _axios.interceptors.response.use(
-  function(response) {
+  function (response) {
     // Do something with response data
     return response;
   },
-  function(error) {
+  function (error) {
     // Do something with response error
+    if (error.response.data.message) {
+      Vue.prototype.$message({
+        type: 'error',
+        message: error.response.data.message
+      })
+    }
+    if (error.response.status === 401) {
+      router.push('/login');
+    }
     return Promise.reject(error);
   }
 );
 
-Plugin.install = function(Vue, options) {
+Plugin.install = function (Vue, options) {
   Vue.axios = _axios;
   window.axios = _axios;
   Object.defineProperties(Vue.prototype, {

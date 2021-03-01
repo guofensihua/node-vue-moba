@@ -118,8 +118,9 @@
               </el-form-item>
               <el-form-item label="图标">
                 <el-upload
+                  :headers="getAuthorization"
                   class="avatar-uploader"
-                  :action="axios.defaults.baseURL + '/upload'"
+                  :action="uploadUrl"
                   :show-file-list="false"
                   :on-success="(res) => $set(item, 'icon', res.url)"
                 >

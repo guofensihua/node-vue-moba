@@ -16,8 +16,9 @@
             </el-form-item>
             <el-form-item label="图片" style="margin-top: 0.5rem">
               <el-upload
+                :headers="getAuthorization"
                 class="avatar-uploader"
-                :action="axios.defaults.baseURL + '/upload'"
+                :action="uploadUrl"
                 :show-file-list="false"
                 :on-success="(res) => $set(item, 'image', res.url)"
               >
